@@ -1,11 +1,16 @@
 import { useDesk } from '../store'
+import { BeatPane } from './BeatPane'
 import { BriefThread } from './BriefThread'
+import { CompilerDraft } from './CompilerDraft'
+import { DialBoard } from './DialBoard'
 import { KeepStill } from './KeepStill'
 import { KillLine } from './KillLine'
+import { ModuleBar } from './ModuleBar'
 import { OpenVault } from './OpenVault'
-import { PromptPane } from './PromptPane'
 import { RoomStrip } from './RoomStrip'
+import { RunMeta } from './RunMeta'
 import { SettingsDrawer } from './SettingsDrawer'
+import { Verdict } from './Verdict'
 import { shortStamp } from '../time'
 
 export function Desk() {
@@ -36,13 +41,30 @@ export function Desk() {
         <OpenVault />
       ) : (
         <main className="surface">
-          <section className="col col-left">
+          <section className="cell cell-module">
+            <ModuleBar />
+          </section>
+          <section className="cell cell-keep">
             <KeepStill />
             <KillLine />
-            <BriefThread />
           </section>
-          <section className="col col-right">
-            <PromptPane />
+          <section className="cell cell-dials">
+            <DialBoard />
+          </section>
+          <section className="cell cell-beat">
+            <BeatPane />
+          </section>
+          <section className="cell cell-meta">
+            <RunMeta />
+          </section>
+          <section className="cell cell-verdict">
+            <Verdict />
+          </section>
+          <section className="cell cell-draft">
+            <CompilerDraft />
+          </section>
+          <section className="cell cell-brief">
+            <BriefThread />
           </section>
         </main>
       )}

@@ -1,18 +1,27 @@
 import { emptyRun } from '../defaults'
 import { isoNow } from '../time'
-import type { BriefNote, Firm, Keep, Kill, Pipe, ProjectKind, Room, RunCard, RunStatus, Seat, FileKind } from '../types'
+import type {
+  BriefNote,
+  Firm,
+  Keep,
+  Kill,
+  ModulePack,
+  Pipe,
+  ProjectKind,
+  Room,
+  RunCard,
+  RunStatus,
+  Seat,
+} from '../types'
+import { recipeFromUnknown } from './modules'
 
-const PIPES: Pipe[] = ['higgsfield', 'weavy', 'figma', 'text']
-const FILES: FileKind[] = ['still', '15s', 'cut']
+const PIPES: Pipe[] = ['higgsfield', 'weavy', 'figma', 'openai', 'anthropic']
 const KINDS: ProjectKind[] = ['client', 'house']
 const STATUSES: RunStatus[] = ['draft', 'ready', 'running', 'keep', 'kill']
 
 function asPipe(v: string | undefined, fallback: Pipe): Pipe {
+  if (v === 'text') return 'openai'
   return v && (PIPES as string[]).includes(v) ? (v as Pipe) : fallback
-}
-
-function asFile(v: string | undefined, fallback: FileKind): FileKind {
-  return v && (FILES as string[]).includes(v) ? (v as FileKind) : fallback
 }
 
 function asKind(v: string | undefined, fallback: ProjectKind): ProjectKind {
@@ -88,17 +97,28 @@ function extractFence(block: string): string {
   return rest
 }
 
+function extractNamedFence(block: string, label: string): string | null {
+  const re = new RegExp('```' + label + '\\n([\\s\\S]*?)\\n```')
+  const m = re.exec(block)
+  return m ? m[1].replace(/\s+$/, '') : null
+}
+
 function parseKeep(block: string): Keep | null {
   const trimmed = block.trim()
   if (!trimmed || trimmed === 'none') return null
   const { fields, rest } = fieldMap(trimmed)
-  if (!rest && !fields.at) return null
+  const compiled = extractNamedFence(trimmed, 'compiled') ?? rest
+  const beat = fields.beat || extractNamedFence(trimmed, 'beat') || rest.split('\n')[0] || ''
+  if (!compiled && !fields.at) return null
   return {
     at: fields.at ?? isoNow(),
     pipe: asPipe(fields.pipe, 'higgsfield'),
-    file: asFile(fields.file, 'still'),
+    recipe: recipeFromUnknown(fields.recipe || fields.file),
+    moduleId: fields.module ?? '2distort',
     payerId: fields.payer ?? 'a',
-    prompt: rest,
+    spend: fields.spend ?? '',
+    beat,
+    compiled,
   }
 }
 
@@ -106,23 +126,35 @@ function parseKill(block: string): Kill | null {
   const trimmed = block.trim()
   if (!trimmed || trimmed === 'none') return null
   const { fields, rest } = fieldMap(trimmed)
-  const prompt = rest || fields.note || ''
-  if (!prompt && !fields.at) return null
+  const compiled = extractNamedFence(trimmed, 'compiled') ?? rest
+  const beat = fields.beat || rest.split('\n')[0] || ''
+  if (!compiled && !fields.at) return null
   return {
     at: fields.at ?? isoNow(),
-    note: fields.note ?? prompt.split('\n')[0] ?? '',
-    prompt,
+    note: fields.note ?? beat,
+    beat,
+    compiled,
   }
 }
 
-function parseLive(block: string, payerId: string): RunCard {
-  const base = emptyRun(payerId)
+function parseLive(block: string, payerId: string, modules: ModulePack[]): RunCard {
+  const base = emptyRun(payerId, isoNow(), modules)
   const { fields } = fieldMap(block)
+  const beat = extractNamedFence(block, 'beat') ?? extractFence(block)
+  const compiled = extractNamedFence(block, 'compiled') ?? ''
+  const activeDials = (fields.dials ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
   return {
-    prompt: extractFence(block),
+    beat,
+    compiled: compiled || base.compiled,
     pipe: asPipe(fields.pipe, base.pipe),
     payerId: fields.payer ?? payerId,
-    file: asFile(fields.file, base.file),
+    recipe: recipeFromUnknown(fields.recipe || fields.file),
+    moduleId: fields.module ?? base.moduleId,
+    activeDials: activeDials.length ? activeDials : base.activeDials,
+    spend: fields.spend ?? '',
     status: asStatus(fields.status, 'draft'),
     updatedAt: fields.updated ?? isoNow(),
   }
@@ -151,7 +183,7 @@ function parseBrief(block: string): BriefNote[] {
   return notes
 }
 
-export function parseRoom(raw: string, fallbackId: string, payerId: string): Room {
+export function parseRoom(raw: string, fallbackId: string, payerId: string, modules: ModulePack[]): Room {
   const { meta, body } = parseFrontMatter(raw)
   const sections = splitSections(body)
   return {
@@ -162,7 +194,7 @@ export function parseRoom(raw: string, fallbackId: string, payerId: string): Roo
     lastKeep: parseKeep(sections['last keep'] ?? ''),
     lastKill: parseKill(sections['last kill'] ?? ''),
     brief: parseBrief(sections.brief ?? ''),
-    live: parseLive(sections.live ?? '', payerId),
+    live: parseLive(sections.live ?? '', payerId, modules),
   }
 }
 
@@ -182,31 +214,53 @@ export function serializeRoom(room: Room): string {
     id: room.id,
     title: room.title,
     kind: room.kind,
+    module: room.live.moduleId,
+    recipe: room.live.recipe,
     updated: room.live.updatedAt,
   })
   const refs = room.refs.length ? room.refs.map((r) => `- ${r}`).join('\n') : 'none'
   const keep = room.lastKeep
     ? [
         `at: ${room.lastKeep.at}`,
+        `module: ${room.lastKeep.moduleId}`,
+        `recipe: ${room.lastKeep.recipe}`,
         `pipe: ${room.lastKeep.pipe}`,
-        `file: ${room.lastKeep.file}`,
         `payer: ${room.lastKeep.payerId}`,
+        `spend: ${room.lastKeep.spend}`,
+        `beat: ${room.lastKeep.beat.replace(/\n/g, ' ')}`,
         '',
-        room.lastKeep.prompt,
+        '```compiled',
+        room.lastKeep.compiled,
+        '```',
       ].join('\n')
     : 'none'
   const kill = room.lastKill
-    ? [`at: ${room.lastKill.at}`, `note: ${room.lastKill.note}`, '', room.lastKill.prompt].join('\n')
+    ? [
+        `at: ${room.lastKill.at}`,
+        `note: ${room.lastKill.note}`,
+        `beat: ${room.lastKill.beat.replace(/\n/g, ' ')}`,
+        '',
+        '```compiled',
+        room.lastKill.compiled,
+        '```',
+      ].join('\n')
     : 'none'
   const live = [
     `status: ${room.live.status}`,
+    `module: ${room.live.moduleId}`,
+    `recipe: ${room.live.recipe}`,
     `pipe: ${room.live.pipe}`,
     `payer: ${room.live.payerId}`,
-    `file: ${room.live.file}`,
+    `spend: ${room.live.spend}`,
+    `dials: ${room.live.activeDials.join(',')}`,
     `updated: ${room.live.updatedAt}`,
     '',
+    '```beat',
+    room.live.beat,
     '```',
-    room.live.prompt,
+    '',
+    '```compiled',
+    room.live.compiled,
     '```',
   ].join('\n')
   const brief = room.brief.length
@@ -233,7 +287,10 @@ ${brief}
 `
 }
 
-export function parseState(raw: string, fallback: Firm): { firm: Firm; activeRoomId: string } {
+export function parseState(
+  raw: string,
+  fallback: Firm,
+): { firm: Firm; activeRoomId: string; activeModuleId: string } {
   const { meta, body } = parseFrontMatter(raw)
   const sections = splitSections(body)
   const seats: Seat[] = [...fallback.seats]
@@ -252,13 +309,15 @@ export function parseState(raw: string, fallback: Firm): { firm: Firm; activeRoo
   return {
     firm,
     activeRoomId: meta.activeroom || meta.activeRoom || 'live',
+    activeModuleId: meta.module || meta.activeModule || '2distort',
   }
 }
 
-export function serializeState(firm: Firm, activeRoomId: string): string {
+export function serializeState(firm: Firm, activeRoomId: string, activeModuleId: string): string {
   return `${yaml({
     firm: firm.name,
     activeRoom: activeRoomId,
+    module: activeModuleId,
     updated: isoNow(),
   })}
 # state
@@ -270,7 +329,9 @@ export function serializeState(firm: Firm, activeRoomId: string): string {
 }
 
 export function serializeIndex(firm: Firm, rooms: Room[]): string {
-  const lines = rooms.map((r) => `- [[desk/rooms/${r.id}]] · ${r.kind} · ${r.live.status} · ${r.title}`)
+  const lines = rooms.map(
+    (r) => `- [[desk/rooms/${r.id}]] · ${r.kind} · ${r.live.moduleId} · ${r.live.recipe} · ${r.live.status} · ${r.title}`,
+  )
   return `# ${firm.name}
 
 ${lines.join('\n') || '- (no rooms)'}
@@ -278,11 +339,12 @@ ${lines.join('\n') || '- (no rooms)'}
 }
 
 export function slugify(title: string, taken: Set<string>): string {
-  const base = title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 48) || 'room'
+  const base =
+    title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 48) || 'room'
   let slug = base
   let n = 2
   while (taken.has(slug)) {

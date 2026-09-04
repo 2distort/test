@@ -55,7 +55,7 @@ export function SettingsDrawer() {
           </div>
         </div>
 
-        <p className="field-note">Keys stay in this browser. The vault holds the work.</p>
+        <p className="field-note">BYOK. Keys stay in this browser. Pipes sit under the module. The vault holds the work.</p>
 
         {PROVIDERS.map((p) => (
           <label className="field" key={p.id}>

@@ -1,7 +1,9 @@
 import { DEFAULT_FIRM, newRoom } from '../defaults'
-import type { Firm, Room } from '../types'
+import { DEFAULT_MODULE_ID } from '../modules/stubs'
 import { logStamp } from '../time'
+import type { Firm, ModulePack, Room } from '../types'
 import { parseRoom, parseState, serializeIndex, serializeRoom, serializeState } from './markdown'
+import { appendModuleKeep, ensureModules, writeModuleDials } from './modules'
 
 export const DESK_DIR = 'desk'
 export const ROOMS_DIR = 'rooms'
@@ -59,23 +61,27 @@ async function readFile(parent: FileSystemDirectoryHandle, name: string): Promis
 export type VaultPayload = {
   firm: Firm
   rooms: Room[]
+  modules: ModulePack[]
   activeRoomId: string
   log: string
 }
 
-function fallbackRoom(payerId: string): Room {
-  return newRoom('live', 'live', 'house', payerId)
+function fallbackRoom(payerId: string, modules: ModulePack[]): Room {
+  return newRoom('live', 'live', 'house', payerId, undefined, modules)
 }
 
 export async function ensureDesk(root: FileSystemDirectoryHandle, thisSeatId: string): Promise<VaultPayload> {
   const desk = await dir(root, DESK_DIR)
   const roomsDir = await dir(desk, ROOMS_DIR)
+  const modules = await ensureModules(desk)
 
   const stateRaw = await readFile(desk, STATE_FILE)
   const indexRaw = await readFile(desk, INDEX_FILE)
   const logRaw = await readFile(desk, LOG_FILE)
 
-  const parsedState = stateRaw ? parseState(stateRaw, DEFAULT_FIRM) : { firm: DEFAULT_FIRM, activeRoomId: 'live' }
+  const parsedState = stateRaw
+    ? parseState(stateRaw, DEFAULT_FIRM)
+    : { firm: DEFAULT_FIRM, activeRoomId: 'live', activeModuleId: DEFAULT_MODULE_ID }
   const firm = parsedState.firm
   const payerId = firm.seats.some((s) => s.id === thisSeatId) ? thisSeatId : firm.seats[0].id
 
@@ -85,13 +91,13 @@ export async function ensureDesk(root: FileSystemDirectoryHandle, thisSeatId: st
     const text = await readFile(roomsDir, entry.name)
     if (!text) continue
     const slug = entry.name.replace(/\.md$/, '')
-    rooms.push(parseRoom(text, slug, payerId))
+    rooms.push(parseRoom(text, slug, payerId, modules))
   }
 
   rooms.sort((a, b) => a.title.localeCompare(b.title))
 
   if (rooms.length === 0) {
-    const live = fallbackRoom(payerId)
+    const live = fallbackRoom(payerId, modules)
     rooms.push(live)
     await writeFile(roomsDir, `${live.id}.md`, serializeRoom(live))
   }
@@ -101,14 +107,15 @@ export async function ensureDesk(root: FileSystemDirectoryHandle, thisSeatId: st
     : rooms[0].id
 
   const log = logRaw ?? '# log\n\n'
+  const moduleId = rooms.find((r) => r.id === activeRoomId)?.live.moduleId ?? DEFAULT_MODULE_ID
 
   if (!stateRaw || !indexRaw || !logRaw) {
-    await writeFile(desk, STATE_FILE, serializeState(firm, activeRoomId))
+    await writeFile(desk, STATE_FILE, serializeState(firm, activeRoomId, moduleId))
     await writeFile(desk, INDEX_FILE, serializeIndex(firm, rooms))
     if (!logRaw) await writeFile(desk, LOG_FILE, log)
   }
 
-  return { firm, rooms, activeRoomId, log }
+  return { firm, rooms, modules, activeRoomId, log }
 }
 
 export async function writeRoom(root: FileSystemDirectoryHandle, room: Room): Promise<void> {
@@ -125,7 +132,8 @@ export async function writeDeskMeta(
   log: string,
 ): Promise<void> {
   const desk = await dir(root, DESK_DIR)
-  await writeFile(desk, STATE_FILE, serializeState(firm, activeRoomId))
+  const moduleId = rooms.find((r) => r.id === activeRoomId)?.live.moduleId ?? DEFAULT_MODULE_ID
+  await writeFile(desk, STATE_FILE, serializeState(firm, activeRoomId, moduleId))
   await writeFile(desk, INDEX_FILE, serializeIndex(firm, rooms))
   await writeFile(desk, LOG_FILE, log)
 }
@@ -142,6 +150,21 @@ export async function persistActive(
   await writeDeskMeta(root, firm, rooms, activeRoomId, log)
 }
 
+export async function persistModuleWeights(root: FileSystemDirectoryHandle, pack: ModulePack): Promise<void> {
+  const desk = await dir(root, DESK_DIR)
+  await writeModuleDials(desk, pack)
+}
+
+export async function persistModuleKeep(
+  root: FileSystemDirectoryHandle,
+  pack: ModulePack,
+  compiled: string,
+  at: string,
+): Promise<void> {
+  const desk = await dir(root, DESK_DIR)
+  await appendModuleKeep(desk, pack, compiled, at)
+}
+
 export function appendLog(
   log: string,
   verdict: 'keep' | 'kill',
@@ -151,6 +174,6 @@ export function appendLog(
 ): string {
   const { live } = room
   const base = log.trim().length > 0 ? `${log.trimEnd()}\n\n` : '# log\n\n'
-  const excerpt = live.prompt.trim().split('\n')[0]?.slice(0, 200) ?? ''
-  return `${base}## ${logStamp(at)} · ${verdict} · ${payerName} · ${live.pipe} · ${live.file} · ${room.id}\n${excerpt}\n`
+  const excerpt = live.beat.trim().split('\n')[0]?.slice(0, 200) ?? ''
+  return `${base}## ${logStamp(at)} · ${verdict} · ${payerName} · ${live.moduleId} · ${live.recipe} · ${live.pipe} · ${room.id}\n${excerpt}\n`
 }

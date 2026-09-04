@@ -1,8 +1,8 @@
 # Two Seat (firm-desk)
 
-Local-first desk for a two-person AI creative firm. Open it and make the next unit — still, 15s, or cut note — without leaving the picture.
+Local-first BYOK desk for a two-person AI creative firm. Open it, pick a module and a recipe, write the beat, read the compiled draft, keep or kill.
 
-v1 is front end only. Generation stays in Higgsfield / Weavy / Figma / a text model. This desk holds the live room, the next prompt, who spends, and the keep/kill trail as markdown in a linked folder.
+v1 is front end only. Providers are pipes under modules. Keys stay in `localStorage`. The linked folder is memory.
 
 ## Run
 
@@ -27,33 +27,47 @@ On first open, use **open vault** and pick the local folder (an Obsidian vault i
 
 ```
 desk/
-  index.md      room index
-  log.md        keep / kill trail
-  state.md      firm name, seats, live room
-  rooms/*.md    one file per room
+  index.md
+  log.md
+  state.md
+  rooms/*.md
+  modules/<id>/
+    sheet.md
+    system.md
+    dials.json
+    locks/
+    recipes/
+    keeps.md
 ```
 
-The folder is the sync. The other seat — and an LLM tomorrow — reads the same files. Provider keys never leave this browser (`localStorage`).
+The folder is the sync. Provider keys never leave this browser.
 
 You are whoever this machine is. Set the active seat in **set**. There is no seat gate.
 
-## Five jobs
+## Modules
 
-1. **See the live room** — title, refs, last keep, last kill.
-2. **Write the next prompt** on top of those refs.
-3. **Name who spends and which pipe** — HF / Weavy / Figma / text, plus still · 15s · cut.
-4. **Mark running / keep / kill**.
-5. **Land it as markdown** in the linked folder.
+A module is a fidelity pack, not a theme kit. One module at a time — packs do not mix. Dials are that module’s words. Weights move on keep / kill.
 
-If a screen does not help one of those five, it does not ship.
+Stub modules shipped: `2distort` and `trio`. Locks are placeholder paths.
+
+## Recipes
+
+`still` · `15s` · `board` · `draft` · `caption`
+
+Pipes (BYOK, quiet drawer): Higgsfield · Weavy · Figma · OpenAI · Anthropic
+
+## Compiler
+
+Write the beat only. The compiler injects sheet + system.md + active dials + recipe + locked refs. The exact draft is on the surface before you mark running. Keep / kill is on that artifact.
 
 ## Layout
 
 ```
-[ last keep / ref still ]     [ next prompt ]
-                              [ via · who pays · file ]
-[ last kill, one line ]       [ keep | kill ]
+[ module chip · recipe ] [ last keep / ref ]
+[ dials from THIS module ] [ next prompt ]
+[ via · who pays · spend ] [ keep | kill ]
+[ compiled draft ]
 [ brief thread, collapsed ]
 ```
 
-Rooms are shots, not module tiles. Client vs house is a kind on the room. Keys and seat names live in a quiet settings drawer.
+Rooms are shots. Client vs house is a kind on the room.

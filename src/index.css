@@ -171,14 +171,16 @@ textarea:focus-visible {
 
 .kind-toggle button,
 .seg button,
-.meta-row button {
+.meta-row button,
+.module-bar button {
   color: var(--ink-faint);
   font-size: 12px;
 }
 
 .kind-toggle button.is-on,
 .seg button.is-on,
-.meta-row button.is-on {
+.meta-row button.is-on,
+.module-bar button.is-on {
   color: var(--ink);
 }
 
@@ -202,27 +204,154 @@ textarea:focus-visible {
 
 .surface {
   display: grid;
-  grid-template-columns: minmax(280px, 42%) minmax(0, 1fr);
+  grid-template-columns: minmax(280px, 40%) minmax(0, 1fr);
+  grid-template-rows: auto minmax(140px, 1fr) auto minmax(120px, 0.7fr) auto;
   min-height: 0;
 }
 
-.col {
-  min-height: 0;
-  display: grid;
+.cell {
   min-width: 0;
+  min-height: 0;
 }
 
-.col-left {
-  grid-template-rows: minmax(0, 1fr) auto auto;
+.cell-module {
+  grid-column: 1;
+  grid-row: 1;
   border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
 
-.col-right {
-  grid-template-rows: minmax(0, 1fr) auto auto;
+.cell-keep {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-bottom: 1px solid var(--line);
 }
 
-.pad {
-  padding: 16px 18px;
+.cell-dials {
+  grid-column: 1;
+  grid-row: 2;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  overflow: auto;
+}
+
+.cell-beat {
+  grid-column: 2;
+  grid-row: 2;
+  border-bottom: 1px solid var(--line);
+  min-height: 0;
+}
+
+.cell-meta {
+  grid-column: 1;
+  grid-row: 3;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.cell-verdict {
+  grid-column: 2;
+  grid-row: 3;
+  border-bottom: 1px solid var(--line);
+}
+
+.cell-draft {
+  grid-column: 1 / -1;
+  grid-row: 4;
+  border-bottom: 1px solid var(--line);
+  min-height: 0;
+  overflow: auto;
+}
+
+.cell-brief {
+  grid-column: 1 / -1;
+  grid-row: 5;
+}
+
+.cell-pad {
+  padding: 12px 16px;
+}
+
+.module-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dials {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dial-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dial {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  color: var(--ink-faint);
+}
+
+.dial.is-on {
+  color: var(--ink);
+  border-color: var(--line-2);
+}
+
+.dial-w {
+  font-size: 10px;
+  color: var(--ink-faint);
+}
+
+.spend input {
+  width: 72px;
+  border-bottom: 1px solid var(--line);
+  padding: 2px 0;
+}
+
+.meta-stack {
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 10px 16px;
+}
+
+.draft-wrap {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.draft-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 16px 0;
+}
+
+.draft-meta {
+  color: var(--ink-faint);
+  font-size: 11px;
+}
+
+.draft {
+  margin: 0;
+  padding: 8px 16px 12px;
+  overflow: auto;
+  flex: 1;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--ink-dim);
+  white-space: pre-wrap;
 }
 
 .still-wrap {
@@ -230,7 +359,8 @@ textarea:focus-visible {
   overflow: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  flex: 1;
 }
 
 .room-head {
@@ -256,7 +386,7 @@ textarea:focus-visible {
 
 .still {
   flex: 1;
-  min-height: 180px;
+  min-height: 88px;
   border: 1px solid var(--line);
   background:
     linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.35)),
@@ -626,20 +756,37 @@ textarea:focus-visible {
 
   .surface {
     grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto auto auto auto auto;
     overflow: auto;
   }
 
-  .col-left {
+  .cell-module,
+  .cell-keep,
+  .cell-dials,
+  .cell-beat,
+  .cell-meta,
+  .cell-verdict,
+  .cell-draft,
+  .cell-brief {
+    grid-column: 1;
     border-right: 0;
-    border-bottom: 1px solid var(--line);
   }
 
+  .cell-module { grid-row: 1; }
+  .cell-keep { grid-row: 2; }
+  .cell-dials { grid-row: 3; }
+  .cell-beat { grid-row: 4; }
+  .cell-meta { grid-row: 5; }
+  .cell-verdict { grid-row: 6; }
+  .cell-draft { grid-row: 7; }
+  .cell-brief { grid-row: 8; }
+
   .still {
-    min-height: 220px;
+    min-height: 140px;
   }
 
   .prompt {
     font-size: 22px;
-    min-height: 200px;
+    min-height: 140px;
   }
 }
