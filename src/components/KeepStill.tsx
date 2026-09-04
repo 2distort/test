@@ -31,7 +31,11 @@ export function KeepStill() {
           className="room-title"
           value={title}
           aria-label="room title"
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) => {
+            const next = e.target.value
+            setTitle(next)
+            if (next.trim()) renameRoom(next)
+          }}
           onBlur={() => renameRoom(title)}
         />
         <span className="kind-toggle">
@@ -45,7 +49,7 @@ export function KeepStill() {
       </div>
 
       <div className={`still${keep ? '' : ' still-empty'}`}>
-        <div className="still-prompt">{keep?.prompt || '·'}</div>
+        <div className="still-prompt">{keep?.prompt ?? ''}</div>
         {keep ? (
           <div className="still-meta">
             {keep.file} · {pipe} · {payer} · {shortStamp(keep.at)}

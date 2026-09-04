@@ -23,7 +23,7 @@ export function OpenVault() {
     <main className="surface">
       <div className="gate">
         <div className="gate-card">
-          <p>{vaultName ? `re-open ${vaultName}` : 'open vault'}</p>
+          {vaultName ? <p>re-open {vaultName}</p> : null}
           <button type="button" onClick={() => void openVault()}>
             open vault
           </button>

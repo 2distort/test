@@ -19,6 +19,8 @@ npm run build
 
 Needs a Chromium browser (Chrome, Edge, Arc). The desk writes the vault through the File System Access API.
 
+In `npm run dev` only, `?mem=1` skips the folder picker so you can click the surface. It does not write a vault.
+
 ## Vault
 
 On first open, use **open vault** and pick the local folder (an Obsidian vault is fine). The desk writes under `desk/`:

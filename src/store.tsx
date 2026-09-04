@@ -95,6 +95,10 @@ export function DeskProvider({ children }: { children: ReactNode }) {
   latestRef.current = { firm, rooms, activeRoomId }
 
   const fsOk = canPickDirectory()
+  const memoryOnly =
+    import.meta.env.DEV &&
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).has('mem')
 
   const persist = useCallback(async (next?: { firm: Firm; rooms: Room[]; activeRoomId: string }) => {
     const handle = handleRef.current
@@ -138,6 +142,15 @@ export function DeskProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false
     void (async () => {
+      if (memoryOnly) {
+        const live = newRoom('live', 'live', 'house', thisSeatId)
+        setRooms([live])
+        setActiveRoomId('live')
+        setVaultName('memory')
+        setGate('ready')
+        latestRef.current = { firm: DEFAULT_FIRM, rooms: [live], activeRoomId: 'live' }
+        return
+      }
       if (!fsOk) {
         setGate('blocked')
         return
@@ -166,7 +179,7 @@ export function DeskProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [bootFromHandle, fsOk])
+  }, [bootFromHandle, fsOk, memoryOnly, thisSeatId])
 
   const openVault = useCallback(async () => {
     if (!fsOk) return
@@ -312,7 +325,12 @@ export function DeskProvider({ children }: { children: ReactNode }) {
       return {
         ...r,
         lastKeep: keep,
-        live: emptyRun(r.live.payerId, at),
+        live: {
+          ...emptyRun(r.live.payerId, at),
+          pipe: r.live.pipe,
+          file: r.live.file,
+          payerId: r.live.payerId,
+        },
       }
     }, true)
   }, [firm, patchActive])
@@ -327,7 +345,12 @@ export function DeskProvider({ children }: { children: ReactNode }) {
       return {
         ...r,
         lastKill: { prompt: r.live.prompt, note: line, at },
-        live: emptyRun(r.live.payerId, at),
+        live: {
+          ...emptyRun(r.live.payerId, at),
+          pipe: r.live.pipe,
+          file: r.live.file,
+          payerId: r.live.payerId,
+        },
       }
     }, true)
   }, [firm, patchActive])
