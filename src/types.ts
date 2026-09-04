@@ -1,8 +1,8 @@
 export type ProjectKind = 'client' | 'house'
 export type RunStatus = 'draft' | 'ready' | 'running' | 'keep' | 'kill'
-export type Pipe = 'higgsfield' | 'weavy' | 'figma' | 'text'
-export type FileKind = 'still' | '15s' | 'cut'
-export type ProviderId = 'higgsfield' | 'weavy' | 'figma' | 'openai' | 'anthropic'
+export type Pipe = 'higgsfield' | 'weavy' | 'figma' | 'openai' | 'anthropic'
+export type RecipeId = 'still' | '15s' | 'board' | 'draft' | 'caption'
+export type ProviderId = Pipe
 
 export type Seat = {
   id: string
@@ -14,25 +14,49 @@ export type Firm = {
   seats: [Seat, Seat]
 }
 
+export type Dial = {
+  id: string
+  word: string
+  weight: number
+}
+
+export type ModulePack = {
+  id: string
+  name: string
+  sheet: string
+  system: string
+  dials: Dial[]
+  locks: string[]
+  recipes: Record<RecipeId, string>
+}
+
 export type RunCard = {
-  prompt: string
+  beat: string
+  compiled: string
   pipe: Pipe
   payerId: string
-  file: FileKind
+  recipe: RecipeId
+  moduleId: string
+  activeDials: string[]
+  spend: string
   status: RunStatus
   updatedAt: string
 }
 
 export type Keep = {
-  prompt: string
+  beat: string
+  compiled: string
   pipe: Pipe
-  file: FileKind
+  recipe: RecipeId
+  moduleId: string
   payerId: string
+  spend: string
   at: string
 }
 
 export type Kill = {
-  prompt: string
+  beat: string
+  compiled: string
   note: string
   at: string
 }
@@ -61,19 +85,18 @@ export const PIPES: { id: Pipe; label: string }[] = [
   { id: 'higgsfield', label: 'HF' },
   { id: 'weavy', label: 'Weavy' },
   { id: 'figma', label: 'Figma' },
-  { id: 'text', label: 'text' },
-]
-
-export const FILES: { id: FileKind; label: string }[] = [
-  { id: 'still', label: 'still' },
-  { id: '15s', label: '15s' },
-  { id: 'cut', label: 'cut' },
-]
-
-export const PROVIDERS: { id: ProviderId; label: string }[] = [
-  { id: 'higgsfield', label: 'Higgsfield' },
-  { id: 'weavy', label: 'Weavy' },
-  { id: 'figma', label: 'Figma' },
   { id: 'openai', label: 'OpenAI' },
   { id: 'anthropic', label: 'Anthropic' },
 ]
+
+export const RECIPES: { id: RecipeId; label: string }[] = [
+  { id: 'still', label: 'still' },
+  { id: '15s', label: '15s' },
+  { id: 'board', label: 'board' },
+  { id: 'draft', label: 'draft' },
+  { id: 'caption', label: 'caption' },
+]
+
+export const PROVIDERS = PIPES
+
+export const RECIPE_IDS: RecipeId[] = ['still', '15s', 'board', 'draft', 'caption']

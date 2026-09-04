@@ -25,7 +25,7 @@ export function KeepStill() {
   }
 
   return (
-    <div className="still-wrap pad">
+    <div className="still-wrap cell-pad">
       <div className="room-head">
         <input
           className="room-title"
@@ -49,10 +49,10 @@ export function KeepStill() {
       </div>
 
       <div className={`still${keep ? '' : ' still-empty'}`}>
-        <div className="still-prompt">{keep?.prompt ?? ''}</div>
+        <div className="still-prompt">{keep?.beat ?? ''}</div>
         {keep ? (
           <div className="still-meta">
-            {keep.file} · {pipe} · {payer} · {shortStamp(keep.at)}
+            {keep.moduleId} · {keep.recipe} · {pipe} · {payer} · {shortStamp(keep.at)}
           </div>
         ) : null}
       </div>
