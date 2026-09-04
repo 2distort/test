@@ -8,3 +8,13 @@ leads.csv
 # Python
 __pycache__/
 *.pyc
+
+# Node
+node_modules/
+dist/
+*.local
+.DS_Store
+
+# TypeScript
+*.tsbuildinfo
+node_modules/.tmp/
