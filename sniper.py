@@ -4,9 +4,9 @@ import datetime
 import os
 
 # CONFIGURATION
-CLIENT_ID = 'YOUR_ID_HERE'
-CLIENT_SECRET = 'YOUR_SECRET_HERE'
-USER_AGENT = 'TrojanHorse_MVP_v1'
+CLIENT_ID = os.environ.get('REDDIT_CLIENT_ID', 'YOUR_ID_HERE')
+CLIENT_SECRET = os.environ.get('REDDIT_CLIENT_SECRET', 'YOUR_SECRET_HERE')
+USER_AGENT = os.environ.get('REDDIT_USER_AGENT', 'TrojanHorse_MVP_v1')
 SUBREDDITS = 'smallbusiness+entrepreneur+saas+marketing+automation'
 KEYWORDS = ['hate', 'manual', 'stuck', 'annoying', 'wish there was', 'pay for', 'broken']
 LOOKBACK_DAYS = 7
