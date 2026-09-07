@@ -100,7 +100,58 @@ ${SHARED_RECIPES_NOTE.caption}`,
   },
 }
 
-export const STUB_MODULES: ModulePack[] = [MODULE_2DISTORT, MODULE_TRIO]
+export const MODULE_CLIENT_STARTER: ModulePack = {
+  id: 'client-starter',
+  name: 'client-starter',
+  sheet: `# client-starter
+
+Sold client pack. Placeholders only — replace with their words and locks before FIRE.
+Still-first. Pilot is still, board, caption.
+Do not mix with house packs.
+`,
+  system: `# system
+
+Use only this module. Do not invent faces.
+Never pull 2distort or trio locks.
+Client IP stays in this folder.
+Hold every path in locks/.
+The user beat is the only new sentence.
+Return one artifact for the active recipe.
+`,
+  dials: [
+    { id: 'brand-red', word: 'brand-red', weight: 0.55 },
+    { id: 'clean', word: 'clean', weight: 0.6 },
+    { id: 'loud', word: 'loud', weight: 0.4 },
+    { id: 'quiet', word: 'quiet', weight: 0.45 },
+  ],
+  locks: [
+    'desk/modules/client-starter/locks/hero-still.png',
+    'desk/modules/client-starter/locks/grade-ref.png',
+  ],
+  recipes: {
+    still: `# still
+
+${SHARED_RECIPES_NOTE.still}
+Pilot recipe. Hold their lock.`,
+    '15s': `# 15s
+
+${SHARED_RECIPES_NOTE['15s']}
+Still first / optional.`,
+    board: `# board
+
+${SHARED_RECIPES_NOTE.board}
+Pilot recipe. Same client lock on every cell.`,
+    draft: `# draft
+
+${SHARED_RECIPES_NOTE.draft}`,
+    caption: `# caption
+
+${SHARED_RECIPES_NOTE.caption}
+Pilot recipe.`,
+  },
+}
+
+export const STUB_MODULES: ModulePack[] = [MODULE_2DISTORT, MODULE_TRIO, MODULE_CLIENT_STARTER]
 
 export const DEFAULT_MODULE_ID = MODULE_2DISTORT.id
 export const DEFAULT_RECIPE: RecipeId = STILL

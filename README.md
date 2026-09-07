@@ -48,7 +48,7 @@ You are whoever this machine is. Set the active seat in **set**. There is no sea
 
 A module is a fidelity pack, not a theme kit. One module at a time — packs do not mix. Dials are that module’s words. Weights move on keep / kill.
 
-Stub modules shipped: `2distort` and `trio`. Locks are placeholder paths.
+Stub modules shipped: `2distort` and `trio` (house, internal). `client-starter` is the sold template — replace placeholders with the client's words and locks before FIRE. Locks are placeholder paths.
 
 ## Recipes
 
